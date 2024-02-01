@@ -195,6 +195,13 @@ class FLAME(nn.Module):
                           self.shapedirs, self.posedirs,
                           self.J_regressor, self.parents,
                           self.lbs_weights, dtype=self.dtype)
+        
+        # Compute the vertices without rotation
+        full_pose_no_rot = torch.cat([torch.zeros_like(pose_params[:, :3]), self.neck_pose.expand(batch_size, -1), pose_params[:, 3:], eye_pose_params], dim=1)
+        vertices_wo_rot, _ = lbs(betas, full_pose_no_rot, template_vertices,
+                                    self.shapedirs, self.posedirs,
+                                    self.J_regressor, self.parents,
+                                    self.lbs_weights, dtype=self.dtype)
 
         lmk_faces_idx = self.lmk_faces_idx.unsqueeze(dim=0).expand(batch_size, -1)
         lmk_bary_coords = self.lmk_bary_coords.unsqueeze(dim=0).expand(batch_size, -1, -1)
@@ -213,7 +220,7 @@ class FLAME(nn.Module):
         landmarks3d = vertices2landmarks(vertices, self.faces_tensor,
                                        self.full_lmk_faces_idx.repeat(bz, 1),
                                        self.full_lmk_bary_coords.repeat(bz, 1, 1))
-        return vertices, landmarks2d, landmarks3d
+        return vertices, landmarks2d, landmarks3d, vertices_wo_rot
 
 class FLAMETex(nn.Module):
     """

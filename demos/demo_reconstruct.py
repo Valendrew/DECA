@@ -72,6 +72,12 @@ def main(args):
             np.savetxt(os.path.join(savefolder, name, name + '_kpt3d.txt'), opdict['landmarks3d'][0].cpu().numpy())
         if args.saveObj:
             deca.save_obj(os.path.join(savefolder, name, name + '.obj'), opdict)
+
+            # Save the no rotation obj
+            verts_wo_rot = opdict['verts_wo_rot'][0].cpu().numpy()
+            faces = deca.render.faces[0].cpu().numpy()
+            filename_verts_wo_rot = os.path.join(savefolder, name, name + '_verts_wo_rot.obj')
+            util.write_obj(filename_verts_wo_rot, verts_wo_rot, faces)
         if args.saveMat:
             opdict = util.dict_tensor2npy(opdict)
             savemat(os.path.join(savefolder, name, name + '.mat'), opdict)
@@ -126,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('--saveObj', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save outputs as .obj, detail mesh will end with _detail.obj. \
                             Note that saving objs could be slow' )
-    parser.add_argument('--saveMat', default=True, type=lambda x: x.lower() in ['true', '1'],
+    parser.add_argument('--saveMat', default=False, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save outputs as .mat' )
     parser.add_argument('--saveImages', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save visualization output as seperate images' )

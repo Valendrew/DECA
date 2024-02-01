@@ -49,6 +49,8 @@ def main(args):
         name = testdata[i]['imagename']
         images = testdata[i]['image'].to(device)[None,...]
         with torch.no_grad():
+            # Returns a dictionary with shape, tex, exp, pose, cam, light, images
+            # Could also include detail (when use_detail is True) and euler_jaw_pose (when jaw_type is euler)
             codedict = deca.encode(images)
             opdict, visdict = deca.decode(codedict) #tensor
             if args.render_orig:
@@ -121,11 +123,11 @@ if __name__ == '__main__':
                         help='whether to save 2D and 3D keypoints' )
     parser.add_argument('--saveDepth', default=False, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save depth image' )
-    parser.add_argument('--saveObj', default=False, type=lambda x: x.lower() in ['true', '1'],
+    parser.add_argument('--saveObj', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save outputs as .obj, detail mesh will end with _detail.obj. \
                             Note that saving objs could be slow' )
-    parser.add_argument('--saveMat', default=False, type=lambda x: x.lower() in ['true', '1'],
+    parser.add_argument('--saveMat', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save outputs as .mat' )
-    parser.add_argument('--saveImages', default=False, type=lambda x: x.lower() in ['true', '1'],
+    parser.add_argument('--saveImages', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save visualization output as seperate images' )
     main(parser.parse_args())

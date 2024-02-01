@@ -57,7 +57,7 @@ def main(args):
                 tform = testdata[i]['tform'][None, ...]
                 tform = torch.inverse(tform).transpose(1,2).to(device)
                 original_image = testdata[i]['original_image'][None, ...].to(device)
-                _, orig_visdict = deca.decode(codedict, render_orig=True, original_image=original_image, tform=tform)    
+                orig_opdict, orig_visdict = deca.decode(codedict, render_orig=True, original_image=original_image, tform=tform)    
                 orig_visdict['inputs'] = original_image            
 
         if args.saveDepth or args.saveKpt or args.saveObj or args.saveMat or args.saveImages:
@@ -82,9 +82,9 @@ def main(args):
             opdict = util.dict_tensor2npy(opdict)
             savemat(os.path.join(savefolder, name, name + '.mat'), opdict)
         if args.saveVis:
-            cv2.imwrite(os.path.join(savefolder, name + '_vis.jpg'), deca.visualize(visdict))
+            cv2.imwrite(os.path.join(savefolder, name, name + '_vis.jpg'), deca.visualize(visdict))
             if args.render_orig:
-                cv2.imwrite(os.path.join(savefolder, name + '_vis_original_size.jpg'), deca.visualize(orig_visdict))
+                cv2.imwrite(os.path.join(savefolder, name, name + '_vis_original_size.jpg'), deca.visualize(orig_visdict))
         if args.saveImages:
             for vis_name in ['inputs', 'rendered_images', 'albedo_images', 'shape_images', 'shape_detail_images', 'landmarks2d']:
                 if vis_name not in visdict.keys():
@@ -94,6 +94,11 @@ def main(args):
                 if args.render_orig:
                     image = util.tensor2image(orig_visdict[vis_name][0])
                     cv2.imwrite(os.path.join(savefolder, name, 'orig_' + name + '_' + vis_name +'.jpg'), util.tensor2image(orig_visdict[vis_name][0]))
+        if args.saveVertices:
+            np.savetxt(os.path.join(savefolder, name, name + '_verts.txt'), opdict['verts'][0].cpu().numpy())
+            np.savetxt(os.path.join(savefolder, name, name + '_verts_wo_rot.txt'), opdict['verts_wo_rot'][0].cpu().numpy())
+            if args.render_orig:
+                np.savetxt(os.path.join(savefolder, name, 'orig_' + name + '_trans_verts.txt'), orig_opdict['trans_verts_orig'][0].cpu().numpy())
     print(f'-- please check the results in {savefolder}')
         
 if __name__ == '__main__':
@@ -136,4 +141,6 @@ if __name__ == '__main__':
                         help='whether to save outputs as .mat' )
     parser.add_argument('--saveImages', default=True, type=lambda x: x.lower() in ['true', '1'],
                         help='whether to save visualization output as seperate images' )
+    parser.add_argument('--saveVertices', default=True, type=lambda x: x.lower() in ['true', '1'],
+                        help='whether to save vertices' )
     main(parser.parse_args())

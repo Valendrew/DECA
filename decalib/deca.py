@@ -136,7 +136,7 @@ class DECA(nn.Module):
         return vis68
 
     # @torch.no_grad()
-    def encode(self, images, use_detail=True):
+    def encode(self, images, use_detail=True, remove_jaw_pose=False):
         if use_detail:
             # use_detail is for training detail model, need to set coarse model as eval mode
             with torch.no_grad():
@@ -153,7 +153,11 @@ class DECA(nn.Module):
             euler_jaw_pose = posecode[:,3:].clone() # x for yaw (open mouth), y for pitch (left ang right), z for roll
             posecode[:,3:] = batch_euler2axis(euler_jaw_pose)
             codedict['pose'] = posecode
-            codedict['euler_jaw_pose'] = euler_jaw_pose  
+            codedict['euler_jaw_pose'] = euler_jaw_pose 
+        if remove_jaw_pose:
+            posecode = codedict['pose']
+            posecode[:,3:] = torch.zeros_like(posecode[:,3:])
+            codedict['pose'] = posecode
         return codedict
 
     # @torch.no_grad()
@@ -163,7 +167,7 @@ class DECA(nn.Module):
         batch_size = images.shape[0]
         
         ## decode
-        verts, landmarks2d, landmarks3d, verts_wo_rot = self.flame(shape_params=codedict['shape'], expression_params=codedict['exp'], pose_params=codedict['pose'])
+        verts, landmarks2d, landmarks3d, verts_wo_pose = self.flame(shape_params=codedict['shape'], expression_params=codedict['exp'], pose_params=codedict['pose'])
         if self.cfg.model.use_tex:
             albedo = self.flametex(codedict['tex'])
         else:
@@ -176,7 +180,7 @@ class DECA(nn.Module):
         trans_verts = util.batch_orth_proj(verts, codedict['cam']); trans_verts[:,:,1:] = -trans_verts[:,:,1:]
         opdict = {
             'verts': verts,
-            'verts_wo_rot': verts_wo_rot,
+            'verts_wo_pose': verts_wo_pose,
             'trans_verts': trans_verts,
             'landmarks2d': landmarks2d,
             'landmarks3d': landmarks3d,

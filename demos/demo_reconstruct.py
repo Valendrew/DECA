@@ -43,6 +43,7 @@ def main(args):
         iscrop=args.iscrop,
         face_detector=args.detector,
         sample_step=args.sample_step,
+        device=device,
     )
 
     # run DECA
